@@ -12,7 +12,9 @@ export interface StartServerResponse {
   url: URL;
 }
 
-export type StartServer = (options: ServerOptions) => StartServerResponse;
+export type StartServer = (
+  options: ServerOptions
+) => MaybePromise<StartServerResponse>;
 
 export type Server = {
   start: StartServer;

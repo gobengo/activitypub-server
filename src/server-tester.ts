@@ -8,7 +8,7 @@ type UseServer = (server: Server, use: UseStartedServer) => () => Promise<void>;
 
 export const use: UseServer = (_server, use) => async () => {
   const log = ConsoleLogFunction();
-  const { stop, url } = _server.start({ log });
+  const { stop, url } = await _server.start({ log });
   try {
     await use({ fetch, url });
   } finally {

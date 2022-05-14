@@ -1,4 +1,4 @@
-import { main } from "./server.js";
+import { main } from "./activitypub-server.js";
 import { fileURLToPath } from "url";
 import process from "process";
 
