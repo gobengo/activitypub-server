@@ -2,26 +2,14 @@ import EventEmitter from "events";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { ConsoleLogFunction, LogFunction } from "./log.js";
+import { MaybePromise, Server } from "./server-types.js";
 
-type MaybePromise<T> = T | Promise<T>;
-
-export interface ServerOptions {
-  log: LogFunction;
-  port?: number;
-}
-
-export interface StartServerResponse {
-  stop(): Promise<void>;
-}
-
-type StartServer = (options: ServerOptions) => StartServerResponse;
-
-export function ServerCli(options: { start: StartServer }) {
+export function ServerCli({ start }: Server) {
   const log: LogFunction = ConsoleLogFunction();
   return function cli(...argv: string[]) {
     const args = yargs(hideBin(argv)).argv;
     const port = args.port ? Number(args.port ?? 0) : undefined;
-    const { stop } = options.start({ log, port });
+    const { stop } = start({ log, port });
     onExit(process, stop);
   };
 }
