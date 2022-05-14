@@ -6,10 +6,10 @@ import { MaybePromise, Server } from "./server-types.js";
 
 export function ServerCli({ start }: Server) {
   const log: LogFunction = ConsoleLogFunction();
-  return function cli(...argv: string[]) {
+  return async function cli(...argv: string[]) {
     const args = yargs(hideBin(argv)).argv;
     const port = args.port ? Number(args.port ?? 0) : undefined;
-    const { stop } = start({ log, port });
+    const { stop } = await start({ log, port });
     onExit(process, stop);
   };
 }

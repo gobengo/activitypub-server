@@ -34,5 +34,5 @@ export const Server: IServer = { start };
 
 export async function main() {
   const cli = ServerCli({ start });
-  cli(...process.argv);
+  await cli(...process.argv);
 }
