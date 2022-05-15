@@ -27,6 +27,7 @@
   "dependencies": {
     "@feathersjs/feathers": "^5.0.0-pre.20",
     "@feathersjs/koa": "^5.0.0-pre.20",
+    "@feathersjs/rest-client": "^5.0.0-pre.20",
     "@web-std/fetch": "^4.1.0",
     "activitystreams2": "^0.1.0",
     "koa-mapper": "^1.0.0",

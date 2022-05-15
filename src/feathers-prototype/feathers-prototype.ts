@@ -1,30 +1,47 @@
-import { Application, feathers } from "@feathersjs/feathers";
+import {
+  feathers,
+  Application as FeathersApplication,
+} from "@feathersjs/feathers";
 import "@feathersjs/transport-commons";
-import { koa, errorHandler, rest, Middleware, Koa } from "@feathersjs/koa";
+import {
+  Application,
+  koa,
+  errorHandler,
+  rest,
+  Middleware,
+  bodyParser,
+} from "@feathersjs/koa";
 import { fileURLToPath } from "url";
 import process from "process";
 import { NodeRequestListenerServer } from "../server-http.js";
 import { ServerCli } from "../server-cli.js";
 import type { Server } from "../server-types";
-import Router from "koa-router";
 
-type FeathersPrototypeApplication = Application<{
+type FeathersPrototypeApplication = FeathersApplication<{
   messages: MessageService;
 }>;
 
 /**
  * little prototype app to play with feathersjs + activitypub-ish data
  */
-export function FeathersPrototype(): FeathersPrototypeApplication {
-  const app = feathers();
-  // Register the message service on the Feathers application
-  app.use("messages", new MessageService());
+export function FeathersPrototype() {
+  return (app: FeathersApplication) => {
+    app.use("/", {
+      async find() {
+        return {
+          name: "feathers-prototype",
+        };
+      },
+    });
+    // Register the message service on the Feathers application
+    app.use("messages", new MessageService());
 
-  // Log every time a new message has been created
-  app.service("messages").on("created", (message: Message) => {
-    console.log("A new message has been created", message);
-  });
-  return app;
+    // Log every time a new message has been created
+    app.service("messages").on("created", (message: Message) => {
+      console.log("A new message has been created", message);
+    });
+    return app;
+  };
 }
 
 // This is the interface for the message data
@@ -58,34 +75,21 @@ class MessageService {
   }
 }
 
-export const FeathersPrototypeServer = (
-  feathersPrototype: FeathersPrototypeApplication = FeathersPrototype()
-): Server => {
-  const httpApp = koa(feathersPrototype);
-  const router = new Router();
-  router.get("/", async (ctx) => {
-    ctx.body = {
-      name: "feathers-prototype",
-    };
-  });
-  httpApp.use(router.routes()).use(router.allowedMethods());
-  function authentication(): Middleware {
-    const mw: Middleware = async () => {
-      console.log("in authentication middleware");
-    };
-    return mw;
-  }
+export const FeathersPrototypeServer = async (): Promise<Server> => {
+  const httpApp = koa(feathers());
   httpApp.use(errorHandler());
-  httpApp.use(authentication());
-  httpApp.use(rest());
+  httpApp.use(bodyParser());
+  httpApp.configure(rest());
+  httpApp.configure(FeathersPrototype());
   const httpServer = NodeRequestListenerServer(httpApp.callback());
+  await httpApp.setup(httpServer);
   return httpServer;
 };
 
 // A function that creates new messages and then logs
 // all existing messages
 const main = async (..._argv: string[]) => {
-  const fpApp = FeathersPrototype();
+  const fpApp = feathers().configure(FeathersPrototype());
   // Create a new message on our message service
   await fpApp.service("messages").create({
     text: "Hello Feathers",
@@ -100,7 +104,7 @@ const main = async (..._argv: string[]) => {
 
   console.log("All messages", messages);
 
-  const server = FeathersPrototypeServer();
+  const server = await FeathersPrototypeServer();
   const cli = ServerCli(server);
   await cli(..._argv);
 };

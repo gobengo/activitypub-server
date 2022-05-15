@@ -1,14 +1,21 @@
 import { describe, expect, test } from "@jest/globals";
 import assert from "assert";
 import { use } from "../server-tester.js";
-import { FeathersPrototypeServer } from "./feathers-prototype";
+import {
+  FeathersPrototype,
+  FeathersPrototypeServer,
+} from "./feathers-prototype";
+import { feathers } from "@feathersjs/feathers";
+import rest from "@feathersjs/rest-client";
+import { addressUrl } from "../http.js";
 
-test(
-  "can test server",
-  use(FeathersPrototypeServer(), async ({ fetch, url }) => {
-    const resp = await fetch(url.toString());
-    assert.equal(resp.status, 200);
-    const respBody = await resp.text();
-    assert.ok(respBody.includes("feathers-prototype"));
-  })
-);
+test("can test server using feathers client", async () => {
+  await use(await FeathersPrototypeServer(), async ({ fetch, url }) => {
+    const clientApp = feathers();
+    const restClient = rest(url.toString().replace(/\/$/, ""));
+    clientApp.configure(restClient.fetch(fetch.bind(globalThis)));
+    const rootService = clientApp.service("/");
+    const index = await rootService.find();
+    assert.ok(index.name.includes("feathers-prototype"));
+  })();
+});
