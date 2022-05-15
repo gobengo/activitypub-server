@@ -7,8 +7,8 @@ test(
   "can test server",
   use(FeathersPrototypeServer(), async ({ fetch, url }) => {
     const resp = await fetch(url.toString());
-    assert.equal(resp.status, 404);
+    assert.equal(resp.status, 200);
     const respBody = await resp.text();
-    // assert.ok(respBody.includes("activitypub-server"));
+    assert.ok(respBody.includes("feathers-prototype"));
   })
 );

@@ -1,6 +1,4 @@
-import {
-  Server as IServer,
-} from "./server-types.js";
+import { Server as IServer } from "./server-types.js";
 import { RequestListener } from "http";
 import { NodeRequestListenerServer } from "./server-http.js";
 

@@ -1,11 +1,12 @@
 import { Application, feathers } from "@feathersjs/feathers";
 import "@feathersjs/transport-commons";
-import { koa, errorHandler, rest, Middleware } from "@feathersjs/koa";
+import { koa, errorHandler, rest, Middleware, Koa } from "@feathersjs/koa";
 import { fileURLToPath } from "url";
 import process from "process";
 import { NodeRequestListenerServer } from "../server-http.js";
 import { ServerCli } from "../server-cli.js";
 import type { Server } from "../server-types";
+import Router from "koa-router";
 
 type FeathersPrototypeApplication = Application<{
   messages: MessageService;
@@ -14,7 +15,7 @@ type FeathersPrototypeApplication = Application<{
 /**
  * little prototype app to play with feathersjs + activitypub-ish data
  */
-export function FeathersPrototypeApp(): FeathersPrototypeApplication {
+export function FeathersPrototype(): FeathersPrototypeApplication {
   const app = feathers();
   // Register the message service on the Feathers application
   app.use("messages", new MessageService());
@@ -57,9 +58,17 @@ class MessageService {
   }
 }
 
-export const FeathersPrototypeServer = (): Server => {
-  const fpApp = FeathersPrototypeApp();
-  const httpApp = koa(feathers());
+export const FeathersPrototypeServer = (
+  feathersPrototype: FeathersPrototypeApplication = FeathersPrototype()
+): Server => {
+  const httpApp = koa(feathersPrototype);
+  const router = new Router();
+  router.get("/", async (ctx) => {
+    ctx.body = {
+      name: "feathers-prototype",
+    };
+  });
+  httpApp.use(router.routes()).use(router.allowedMethods());
   function authentication(): Middleware {
     const mw: Middleware = async () => {
       console.log("in authentication middleware");
@@ -76,7 +85,7 @@ export const FeathersPrototypeServer = (): Server => {
 // A function that creates new messages and then logs
 // all existing messages
 const main = async (..._argv: string[]) => {
-  const fpApp = FeathersPrototypeApp();
+  const fpApp = FeathersPrototype();
   // Create a new message on our message service
   await fpApp.service("messages").create({
     text: "Hello Feathers",
