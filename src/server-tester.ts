@@ -6,11 +6,11 @@ type UseStartedServer = (options: { fetch: Fetch; url: URL }) => Promise<void>;
 
 type UseServer = (server: Server, use: UseStartedServer) => () => Promise<void>;
 
-export const use: UseServer = (_server, use) => async () => {
+export const use: UseServer = (_server, doWork) => async () => {
   const log = ConsoleLogFunction();
   const { stop, url } = await _server.start({ log });
   try {
-    await use({ fetch, url });
+    await doWork({ fetch, url });
   } finally {
     await stop();
   }
