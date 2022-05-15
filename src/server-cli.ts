@@ -4,9 +4,11 @@ import { hideBin } from "yargs/helpers";
 import { ConsoleLogFunction, LogFunction } from "./log.js";
 import { MaybePromise, Server } from "./server-types.js";
 
+export type ServerCli = (...argv: string[]) => Promise<void>;
+
 export function ServerCli({ start }: Server) {
   const log: LogFunction = ConsoleLogFunction();
-  return async function cli(...argv: string[]) {
+  return async function (...argv: string[]) {
     const args = yargs(hideBin(argv)).argv;
     const port = args.port ? Number(args.port ?? 0) : undefined;
     const { stop } = await start({ log, port });

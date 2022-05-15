@@ -31,8 +31,4 @@ async function start({
 }
 
 export const Server: IServer = { start };
-
-export async function main() {
-  const cli = ServerCli({ start });
-  await cli(...process.argv);
-}
+export const ActivityPubServer = Server;
