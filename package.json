@@ -25,6 +25,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@feathersjs/feathers": "^5.0.0-pre.20",
     "@web-std/fetch": "^4.1.0",
     "yargs": "^17.5.0"
   },

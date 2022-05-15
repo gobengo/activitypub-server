@@ -8,6 +8,10 @@ import { RequestListener } from "http";
 import * as nodeHttp from "http";
 import { addressUrl, listen } from "./http.js";
 
+export const ActivityPubServer = (): IServer => {
+  return { start };
+};
+
 /** start a server */
 async function start({
   log,
@@ -31,4 +35,3 @@ async function start({
 }
 
 export const Server: IServer = { start };
-export const ActivityPubServer = Server;
