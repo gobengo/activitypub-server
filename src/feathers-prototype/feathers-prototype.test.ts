@@ -19,3 +19,12 @@ test("can test server using feathers client", async () => {
     assert.ok(index.name.includes("feathers-prototype"));
   })();
 });
+
+test("can test server using fetch", async () => {
+  await use(await FeathersPrototypeServer(), async ({ fetch, url }) => {
+    const indexUrl = new URL("/", url);
+    const indexResp = await fetch(indexUrl.toString());
+    const indexRespJson = await indexResp.json();
+    assert.ok(indexRespJson.name.includes("feathers-prototype"));
+  })();
+});
