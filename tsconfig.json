@@ -28,7 +28,6 @@
     "experimentalDecorators": true,
     "downlevelIteration": true,
     "declaration": true,
-
     "pretty": true
   },
   "include": ["typings/**/*", "src/**/*"],
