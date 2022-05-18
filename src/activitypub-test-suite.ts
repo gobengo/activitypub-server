@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import jsonpath from "jsonpath";
 
 export type ActivityPubServerTestSuite = () => {
   test: (options: TestSuiteOptions) => Promise<void>;
@@ -10,17 +11,7 @@ export interface TestSuiteOptions {
   fetch: Fetch;
 }
 
-export const ActivityPubServerTestSuite: ActivityPubServerTestSuite = () => {
-  const test = async (options: TestSuiteOptions) => {
-    const { url, fetch } = options;
-    const actor = Actor(fetch(url.toString()));
-    const inbox = await ActivityPubFetch(options)(actor.inbox);
-    assert.equal(inbox.type, "OrderedCollection");
-  };
-  return { test };
-};
-
-function Actor(actorRequest: Promise<Response>) {
+export function FetchingActor(actorRequest: Promise<Response>) {
   const actorUrl = actorRequest.then(({ url }) => url);
   const actorText = actorRequest.then((r) => r.text());
   const actorJson = actorText.then(async (text) => {
@@ -33,17 +24,36 @@ function Actor(actorRequest: Promise<Response>) {
     }
     return parsed;
   });
+  const id = async (): Promise<[ToUrl, ToJsonPath]> => {
+    const baseUrl = await actorUrl;
+    return [
+      {
+        toURL() {
+          return new URL(baseUrl);
+        },
+      },
+      {
+        toJsonPath() {
+          return "$.id";
+        },
+      },
+    ];
+  };
+  const inbox = async (): Promise<ToUrl> => {
+    const actor = await actorJson;
+    const baseUrl = await actorUrl;
+    return {
+      toURL(): URL {
+        return new URL(actor.inbox, baseUrl);
+      },
+    };
+  };
   return {
-    get inbox(): Promise<ToUrl> {
-      return (async () => {
-        const actor = await actorJson;
-        const baseUrl = await actorUrl;
-        return {
-          toURL(): URL {
-            return new URL(actor.inbox, baseUrl);
-          },
-        };
-      })();
+    get id() {
+      return id();
+    },
+    get inbox() {
+      return inbox();
     },
   };
 }
@@ -52,12 +62,33 @@ type ToUrl = {
   toURL(): URL;
 };
 
-function ActivityPubFetch({ fetch }: { fetch: Fetch }) {
-  async function apFetch(_locator: Promise<ToUrl>) {
+type ToJsonPath = {
+  toJsonPath(): string;
+};
+
+/** todo: support generic 'parsed type' and support io-ts decoder */
+type ActivityPubLocator =
+  | ToUrl
+  /** fetch a url, parse as json, then jsonpath */
+  | [ToUrl, ToJsonPath];
+
+export function ActivityPubFetch({ fetch }: { fetch: Fetch }) {
+  async function apFetch(_locator: Promise<ActivityPubLocator>) {
     const locator = await _locator;
-    const resp = await fetch(locator.toURL().toString());
+    const { toURL }: ToUrl = Array.isArray(locator) ? locator[0] : locator;
+    const { toJsonPath }: ToJsonPath = Array.isArray(locator)
+      ? locator[1]
+      : { toJsonPath: () => "$" };
+    const resp = await fetch(toURL().toString());
     const respBody = await resp.json();
-    return respBody;
+    const jpath = toJsonPath();
+    const result = jsonpath.query(respBody, jpath);
+    if (!result.length) {
+      throw new Error(
+        `ActivityPubFetch failed to find result for jsonpath ${jpath}`
+      );
+    }
+    return result[0];
   }
   return apFetch;
 }

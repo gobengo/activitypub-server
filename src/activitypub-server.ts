@@ -27,10 +27,12 @@ type Actor = {
   name: string;
   inbox: string;
 };
+
 const actor: Route<Response.Ok<Actor>> = route
   .get("/") // Capture id from the path
-  .handler(async () => {
+  .handler(async (request) => {
     return Response.ok({
+      id: request.ctx.URL.toString(),
       name: "activitypub-server",
       inbox: "/inbox",
     });

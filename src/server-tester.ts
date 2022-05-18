@@ -7,8 +7,11 @@ type UseStartedServer = (options: { fetch: Fetch; url: URL }) => Promise<void>;
 type UseServer = (server: Server, use: UseStartedServer) => () => Promise<void>;
 
 function TestLogFunction(): LogFunction {
-  return (_level, ..._loggables) => {
-    /** noop */
+  return (level, ...loggables) => {
+    if (!process.env.DEBUG) {
+      return;
+    }
+    return ConsoleLogFunction()(level, ...loggables);
   };
 }
 

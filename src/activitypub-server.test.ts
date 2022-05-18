@@ -2,7 +2,7 @@ import { describe, expect, test } from "@jest/globals";
 import assert from "assert";
 import { use } from "./server-tester.js";
 import { ActivityPubServer } from "./activitypub-server.js";
-import { ActivityPubServerTestSuite } from "./activitypub-test-suite";
+import { ActivityPubFetch, FetchingActor } from "./activitypub-test-suite";
 
 test(
   "can test server",
@@ -15,9 +15,14 @@ test(
 );
 
 test(
-  "passes ActivityPubServerTestSuite",
+  "can access main actor via FetchingActor",
   use(ActivityPubServer(), async ({ fetch, url }) => {
-    const { test } = ActivityPubServerTestSuite();
-    await test({ fetch, url });
+    const actor = FetchingActor(fetch(url.toString()));
+    // @todo: make this type-safe (actor.id will need a decoder)
+    const id = await ActivityPubFetch({ fetch })(actor.id);
+    assert.equal(id, url.toString());
+    // @todo: make this type-safe (actor.inbox will need a decoder)
+    const inbox = await ActivityPubFetch({ fetch })(actor.inbox);
+    assert.equal(inbox.type, "OrderedCollection");
   })
 );
